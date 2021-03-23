@@ -1,35 +1,50 @@
 import couchbase from 'couchbase';
-// import krypton from 'krypton';
 
-const connectionString=  'couchbase://10.111.90.101//'/* + options.host*/;
-const db = new couchbase.Cluster(connectionString);
-let bucket;
+export class Db {
 
+    private static instance: couchbase;
 
-bucket = db.openBucket('usms', '123456');
-bucket.on('error', err => {
-    console.log(err);
-});
+    private constructor(){}
 
-/*
-const cluster = new couchbase.Cluster('couchbase://localhost/');
-cluster.authenticate('Administrator', '123456');
-const bucket = cluster.openBucket('usms');*//*
-var N1qlQuery = couchbase.N1qlQuery;
+    public static getInstance() {
+        if(!this.instance){
+            const connectionString=  'couchbase://10.111.90.101//'/* + options.host*/;
+            const db = new couchbase.Cluster(connectionString);
 
-bucket.manager().createPrimaryIndex(function() {
-    bucket.upsert('user:king_arthur', {
-            'email': 'kingarthur@couchbase.com', 'interests': ['Holy Grail', 'African Swallows']
-        },
-        function (err, result) {
-            bucket.get('user:king_arthur', function (err, result) {
-                console.log('Got result: %j', result.value);
-                bucket.query(
-                    N1qlQuery.fromString('SELECT * FROM bucketname WHERE $1 in interests LIMIT 1'),
-                    ['African Swallows'],
-                    function (err, rows) {
-                        console.log("Got rows: %j", rows);
-                    });
+            const bucket = db.openBucket('usms', '123456');
+            bucket.on('error', (err) => {
+                console.log(err);
             });
-        });
-});*/
+            const api = {
+                addNewValue(key, value) {
+                    return new Promise((resolve, reject) => {
+                        bucket.insert(key,value, (err) => {
+                            if (err){
+                                console.log(err);
+                                reject(err);
+                            } else {
+                                console.log('success!!');
+                                resolve();
+                            }
+                        });
+                    })
+                },
+                getValue(key) {
+                    return new Promise((resolve, reject) => {
+                        bucket.getAndLock(key, (err, res) => {
+                            if (err || (!res || !res.value)){
+                                console.log(res);
+                                reject(res);
+                            } else {
+                                console.log('success!!');
+                                resolve(res.value);
+                            }
+                        });
+                    });
+                }
+            };
+            this.instance = api;
+        }
+        return this.instance;
+    }
+}

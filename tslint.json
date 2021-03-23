@@ -7,7 +7,10 @@
     "rules": {
         "no-console": false,
         "quotemark": false,
-        "whitespace": false
+        "whitespace": false,
+        "ordered-imports": false,
+        "trailing-comma": false,
+        "member-ordering": false
     },
     "rulesDirectory": []
 }
